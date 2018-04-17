@@ -1,22 +1,16 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets("./") #自动下载数据到这个目录
+mnist = input_data.read_data_sets("./",one_hot=True) #自动下载数据到这个目录
 X_train = mnist.train.images
 X_test = mnist.test.images
 X_train = X_train.T
 X_test = X_test.T
 y_train = mnist.train.labels.astype("int")
 y_test = mnist.test.labels.astype("int")
-y_test=tf.one_hot(y_test,10,on_value=1,off_value=0,axis=0)
-y_train=tf.one_hot(y_train,10,on_value=1,off_value=0,axis=0)
-with tf.Session() as sess:
-    sess.run(y_test)
-    y_test = tf.cast(y_test, dtype=tf.int32)
-    y_test = y_test.eval()
-    sess.run(y_train)
-    y_train = tf.cast(y_train, dtype=tf.int32)
-    y_train = y_train.eval()
+y_train = y_train.T
+y_test = y_test.T
+batch_size = 100
 
 def initialize_parameters(layer_dims):
     np.random.seed(3)
@@ -72,9 +66,9 @@ def L_model_forward(X, parameters):
 
 def compute_cost(AL, Y):
     m = Y.shape[1]
-    cost = (-1 / m) * np.sum(np.multiply(Y, np.log(AL)) + np.multiply(1 - Y, np.log(1 - AL)))
-    cost = np.squeeze(cost)
-    assert (cost.shape == ())
+
+    logprobs = np.multiply(-np.log(AL), Y) + np.multiply(-np.log(1 - AL), 1 - Y)
+    cost = 1. / m * np.sum(logprobs)
 
     return cost
 
@@ -171,14 +165,18 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, num_iterations=500, p
     v, s = initialize_adam(parameters)
     for i in range(0, num_iterations):
 
-        AL, caches = L_model_forward(X, parameters)
 
-        cost = compute_cost(AL, Y)
+        for _ in range(int(mnist.train.num_examples / batch_size)):
+            epoch_x, epoch_y = mnist.train.next_batch(batch_size)
+            epoch_x = epoch_x.T
+            epoch_y = epoch_y.T
+            AL, caches = L_model_forward(epoch_x, parameters)
+            cost = compute_cost(AL, epoch_y)
 
-        grads = L_model_backward(AL, Y, caches)
-        t = t + 1
-        parameters,v,s = update_parameters_with_adam(parameters, grads, v, s, t, learning_rate=0.01,
-                                beta1=0.9, beta2=0.999, epsilon=1e-8)
+            grads = L_model_backward(AL, epoch_y, caches)
+            t = t + 1
+            parameters, v, s = update_parameters_with_adam(parameters, grads, v, s, t, learning_rate=0.01,
+                                beta1=0.9, beta2=0.999, epsilon=1e-6)
 
         if print_cost and i % 100 == 0:
             print("Cost after iteration %i: %f" % (i, cost))
@@ -213,4 +211,4 @@ def sigmoid_backward(dA, cach):
 
 
 
-L_layer_model(X_train, y_train, layers_dims, learning_rate=0.0075, num_iterations=500, print_cost=False)
+L_layer_model(X_train, y_train, layers_dims, learning_rate=0.0075, num_iterations=500, print_cost=True)
