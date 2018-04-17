@@ -177,7 +177,7 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, num_iterations=500, p
 
         grads = L_model_backward(AL, Y, caches)
         t = t + 1
-        parameters = update_parameters_with_adam(parameters, grads, v, s, t, learning_rate=0.01,
+        parameters,v,s = update_parameters_with_adam(parameters, grads, v, s, t, learning_rate=0.01,
                                 beta1=0.9, beta2=0.999, epsilon=1e-8)
 
         if print_cost and i % 100 == 0:
