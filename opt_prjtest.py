@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
+from sklearn.metrics import accuracy_score
 mnist = input_data.read_data_sets("./",one_hot=True) #自动下载数据到这个目录
 X_train = mnist.train.images
 X_test = mnist.test.images
@@ -128,7 +129,7 @@ def initialize_adam(parameters):
     return v, s
 
 
-def update_parameters_with_adam(parameters, grads, v, s, t, learning_rate=0.01,
+def update_parameters_with_adam(parameters, grads, v, s, t, learning_rate=0.01,     #0.995 is better
                                 beta1=0.9, beta2=0.999, epsilon=1e-8):
 
     L = len(parameters) // 2  # number of layers in the neural networks
@@ -155,7 +156,7 @@ def update_parameters_with_adam(parameters, grads, v, s, t, learning_rate=0.01,
 
     return parameters, v, s
 
-layers_dims = [784, 10, 10, 10, 10]
+layers_dims = [784, 50, 20, 10, 10]
 def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, num_iterations=500, print_cost=True):
     L = len(layers_dims)
     costs = []
@@ -176,7 +177,7 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, num_iterations=500, p
             grads = L_model_backward(AL, epoch_y, caches)
             t = t + 1
             parameters, v, s = update_parameters_with_adam(parameters, grads, v, s, t, learning_rate=0.01,
-                                beta1=0.9, beta2=0.999, epsilon=1e-6)
+                                beta1=0.9, beta2=0.995, epsilon=1e-8)
 
         if print_cost and i % 100 == 0:
             print("Cost after iteration %i: %f" % (i, cost))
@@ -211,4 +212,9 @@ def sigmoid_backward(dA, cach):
 
 
 
-L_layer_model(X_train, y_train, layers_dims, learning_rate=0.0075, num_iterations=500, print_cost=True)
+parameters = L_layer_model(X_train, y_train, layers_dims, learning_rate=0.007, num_iterations=10, print_cost=True)
+a3 = L_model_forward(X_test, parameters)
+p = np.argmax(a3[0], axis=0)
+y_true = np.argmax(y_test, axis=0)
+accuracy = accuracy_score(y_true, p)
+print(accuracy)
