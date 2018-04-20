@@ -11,7 +11,7 @@ y_train = mnist.train.labels.astype("int")
 y_test = mnist.test.labels.astype("int")
 y_train = y_train.T
 y_test = y_test.T
-batch_size = 100
+batch_size = 50
 
 def initialize_parameters(layer_dims):
     np.random.seed(3)
@@ -212,9 +212,10 @@ def sigmoid_backward(dA, cach):
 
 
 
+
 parameters = L_layer_model(X_train, y_train, layers_dims, learning_rate=0.007, num_iterations=10, print_cost=True)
 a3 = L_model_forward(X_test, parameters)
-p = np.argmax(a3[0], axis=0)
+prediction = np.argmax(a3[0], axis=0)
 y_true = np.argmax(y_test, axis=0)
-accuracy = accuracy_score(y_true, p)
+accuracy = accuracy_score(y_true, prediction)
 print(accuracy)
