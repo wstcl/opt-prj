@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 from sklearn.metrics import accuracy_score
@@ -12,7 +13,8 @@ y_test = mnist.test.labels.astype("int")
 y_train = y_train.T
 y_test = y_test.T
 batch_size = 50
-
+'''
+'''
 def initialize_parameters(layer_dims):
     np.random.seed(3)
     parameters={}
@@ -156,14 +158,32 @@ def update_parameters_with_adam(parameters, grads, v, s, t, learning_rate=0.01, 
 
     return parameters, v, s
 
-layers_dims = [784, 50, 20, 10, 10]
-def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, num_iterations=500, print_cost=True):
+layers_dims = [784, 10, 10, 10, 10]
+def L_layer_model(X, Y, layers_dims, optimizer, learning_rate=0.0075, num_iterations=500, print_cost=True):
+    '''Arguments:
+    X -- input data, of shape (2, number of examples)
+    Y -- true "label" vector (1 for blue dot / 0 for red dot), of shape (1, number of examples)
+    layers_dims -- python list, containing the size of each layer
+    learning_rate -- the learning rate, scalar.
+    mini_batch_size -- the size of a mini batch
+    beta -- Momentum hyperparameter
+    beta1 -- Exponential decay hyperparameter for the past gradients estimates
+    beta2 -- Exponential decay hyperparameter for the past squared gradients estimates
+    epsilon -- hyperparameter preventing division by zero in Adam updates
+    num_epochs -- number of epochs
+    print_cost -- True to print the cost every 1000 epochs
+
+    Returns:
+    parameters -- python dictionary containing your updated parameters
+    """'''
     L = len(layers_dims)
     costs = []
     t = 0
-
     parameters = initialize_parameters(layers_dims)
-    v, s = initialize_adam(parameters)
+    if optimizer == "gd":
+         pass
+    elif optimizer == "adam":
+        v, s = initialize_adam(parameters)
     for i in range(0, num_iterations):
 
 
@@ -176,13 +196,20 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, num_iterations=500, p
 
             grads = L_model_backward(AL, epoch_y, caches)
             t = t + 1
-            parameters, v, s = update_parameters_with_adam(parameters, grads, v, s, t, learning_rate=0.01,
-                                beta1=0.9, beta2=0.995, epsilon=1e-8)
-
+            if optimizer == "gd":
+                parameters = update_parameters(parameters, grads, learning_rate)
+            elif optimizer == "adam":
+                t = t + 1
+                parameters = update_parameters(parameters, grads, learning_rate)
         if print_cost and i % 100 == 0:
             print("Cost after iteration %i: %f" % (i, cost))
         if print_cost and i % 100 == 0:
             costs.append(cost)
+    plt.plot(costs)
+    plt.ylabel('cost')
+    plt.xlabel('epochs (per )')
+    plt.title("Learning rate = " + str(learning_rate))
+    plt.show()
     return parameters
 
 def sigmoid(Z):
@@ -210,12 +237,19 @@ def sigmoid_backward(dA, cach):
     assert (dZ.shape == Z.shape)
     return dZ
 
+def update_parameters(parameters, grads, learning_rate):
+
+    L = len(parameters) // 2  # number of layers in the neural network
+    for l in range(L):
+        parameters["W" + str(l + 1)] = parameters["W" + str(l + 1)] - learning_rate * grads["dW" + str(l + 1)]
+        parameters["b" + str(l + 1)] = parameters["b" + str(l + 1)] - learning_rate * grads["db" + str(l + 1)]
+
+    return parameters
 
 
-
-parameters = L_layer_model(X_train, y_train, layers_dims, learning_rate=0.007, num_iterations=10, print_cost=True)
+parameters = L_layer_model(X_train, y_train, layers_dims, learning_rate=0.007, num_iterations=10, print_cost=True, optimizer = 'adam')
 a3 = L_model_forward(X_test, parameters)
 prediction = np.argmax(a3[0], axis=0)
 y_true = np.argmax(y_test, axis=0)
 accuracy = accuracy_score(y_true, prediction)
-print(accuracy)
+print("accuracy:",accuracy)
